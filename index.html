@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>Manevi Bilgi Oyunu 🌙</title>
-    <!-- Font Awesome 6 (ikonlar) -->
+    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Google Font: Poppins (eğlenceli ama okunabilir) -->
+    <!-- Google Font: Poppins -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- confetti kütüphanesi (hafif) -->
+    <!-- confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
     
     <style>
@@ -24,7 +24,6 @@
 
         body {
             background: linear-gradient(145deg, #fbe9f0 0%, #e0f2e6 100%);
-            /* açık pembe - nane yeşili geçiş */
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -73,16 +72,23 @@
             font-size: 1.4rem;
         }
 
-        /* SEVİYE KUTULARI (KİLİTLİ/AKTİF) */
+        /* SEVİYE KUTULARI (KAYDIRILABİLİR) */
+        .levels-wrapper {
+            overflow-x: auto;
+            margin-bottom: 20px;
+            padding-bottom: 5px;
+            -webkit-overflow-scrolling: touch;
+        }
+
         .levels-container {
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
             gap: 15px;
-            justify-content: center;
-            margin-bottom: 30px;
+            justify-content: flex-start;
             background: rgba(255,255,255,0.4);
             padding: 20px;
             border-radius: 60px;
+            min-width: min-content;
         }
 
         .level-badge {
@@ -100,6 +106,7 @@
             border: 2px solid #ffe9e9;
             transition: all 0.1s ease;
             position: relative;
+            flex-shrink: 0;
         }
 
         .level-badge.active {
@@ -338,12 +345,45 @@
             box-shadow: 0 12px 0 #b47272;
         }
 
-        /* mobil uyum */
-        @media (max-width: 650px) {
+        /* --------------------------------------------
+           RESPONSIVE İYİLEŞTİRMELER (Telefon/Tablet)
+           -------------------------------------------- */
+        @media (max-width: 768px) {
             .game-container { padding: 20px; }
-            .options-grid { grid-template-columns: 1fr; }
+            .score-box, .level-box { padding: 10px 18px; font-size: 1rem; }
+            .score-box i, .level-box i { font-size: 1.2rem; }
             .question-text { font-size: 1.4rem; }
-            .level-badge { width: 50px; height: 50px; font-size: 1.2rem; }
+            .options-grid { gap: 15px; }
+            .option-btn { padding: 15px 10px; font-size: 1rem; }
+            .next-btn { padding: 14px 30px; font-size: 1.2rem; }
+            .level-badge { width: 55px; height: 55px; font-size: 1.3rem; }
+            .game-over-card { padding: 30px; }
+            .game-over-card h2 { font-size: 1.8rem; }
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .game-container { padding: 15px; border-radius: 32px; }
+            .header { flex-direction: column; align-items: stretch; }
+            .score-box, .level-box { width: 100%; justify-content: center; }
+            .question-card { padding: 20px 15px; }
+            .question-text { font-size: 1.2rem; margin-bottom: 20px; }
+            .options-grid { grid-template-columns: 1fr; gap: 12px; }
+            .option-btn { padding: 14px 12px; font-size: 0.95rem; justify-content: flex-start; }
+            .option-btn i { display: none; } /* ikonları gizle, yer kalsın */
+            .next-btn { width: 100%; padding: 14px 20px; font-size: 1.1rem; }
+            .level-badge { width: 48px; height: 48px; font-size: 1.1rem; }
+            .level-badge.locked i { font-size: 1.3rem; }
+            .game-over-card { padding: 25px; }
+            .game-over-card h2 { font-size: 1.6rem; }
+            .game-over-card p { font-size: 1rem; }
+            .restart-btn { padding: 12px 25px; font-size: 1.1rem; }
+        }
+
+        /* çok küçük ekranlar için ekstra */
+        @media (max-width: 360px) {
+            .question-text { font-size: 1.1rem; }
+            .option-btn { font-size: 0.85rem; }
         }
     </style>
 </head>
@@ -362,9 +402,11 @@
         </div>
     </div>
 
-    <!-- SEVİYE GÖSTERGE (KİLİTLER) -->
-    <div id="levelIndicators" class="levels-container">
-        <!-- javascript ile doldurulacak -->
+    <!-- SEVİYE GÖSTERGE (KAYDIRILABİLİR) -->
+    <div class="levels-wrapper">
+        <div id="levelIndicators" class="levels-container">
+            <!-- javascript ile doldurulacak -->
+        </div>
     </div>
 
     <!-- SORU ALANI -->
@@ -387,9 +429,9 @@
 <div id="gameOverModal" class="game-over-modal">
     <div class="game-over-card">
         <h2><i class="fas fa-heart-crack"></i> Oyun Bitti</h2>
-        <p id="gameOverMessage">Bir daha denemek ister misin?</p>
+        <p id="gameOverMessage">İkinci hakkında da yanlış cevap verdin.</p>
         <button id="restartGameBtn" class="restart-btn">
-            <i class="fas fa-rotate-left"></i> Tekrar Başla
+            <i class="fas fa-rotate-left"></i> Seviyeyi Tekrarla
         </button>
     </div>
 </div>
@@ -429,7 +471,6 @@
         { bolum: 'Peygamberler', soru: 'Kur\'an\'da en çok adı geçen peygamber kimdir?', secenekler: ['Musa', 'İbrahim', 'Nuh', 'Yusuf'], dogru: 0, zorluk: 2 },
         { bolum: 'Peygamberler', soru: 'Hangi peygamber ateşe atılmıştır?', secenekler: ['İsmail', 'İbrahim', 'Musa', 'Yahya'], dogru: 1, zorluk: 1 },
         { bolum: 'Peygamberler', soru: 'Hangi peygamberin mucizesi ölüyü diriltmektir?', secenekler: ['İsa', 'Musa', 'Davud', 'Süleyman'], dogru: 0, zorluk: 2 },
-        // daha fazla soru eklenebilir...
     ];
 
     async function seedQuestionsIfNeeded() {
@@ -452,12 +493,11 @@
     // 2) OYUN DURUMU (LOCALSTORAGE)
     // ----------------------------------------------------
     let gameState = {
-        maxUnlockedLevel: 1,       // En fazla ulaşılmış seviye
+        maxUnlockedLevel: 1,       // En fazla ulaşılmış seviye (asla düşmez)
         currentLevel: 1,
-        currentQuestionIndexInLevel: 0, // 0'dan başlar
+        currentQuestionIndexInLevel: 0,
         score: 0,
-        // Bu seviyede hangi soruların ilk denemede doğru yapıldığını tut (puan alındı)
-        earnedPointsForQuestion: {} // örnek: { "seviye1_soruID": true }
+        earnedPointsForQuestion: {} // { "seviye_soruId": true }
     };
 
     const STORAGE_KEY = 'maneviOyunSave';
@@ -468,7 +508,6 @@
             try {
                 const parsed = JSON.parse(saved);
                 gameState = { ...gameState, ...parsed };
-                // Eski formattan dönüşüm
                 if (!gameState.earnedPointsForQuestion) gameState.earnedPointsForQuestion = {};
             } catch (e) {}
         }
@@ -481,12 +520,12 @@
     // ----------------------------------------------------
     // 3) DEĞİŞKENLER
     // ----------------------------------------------------
-    let allQuestions = [];          // Tüm sorular Firestore'dan çekilecek
-    let currentLevelQuestions = []; // Şu anki seviyeye ait sorular
+    let allQuestions = [];
+    let currentLevelQuestions = [];
     let currentQuestion = null;
-    let answered = false;          // Soru cevaplandı mı?
-    let firstAttempt = true;       // Bu soruda ilk deneme mi?
-    let gameActive = true;        // Oyun devam ediyor mu?
+    let answered = false;
+    let firstAttempt = true;
+    let gameActive = true;
     let selectedOptionIndex = null;
 
     // ----------------------------------------------------
@@ -518,11 +557,11 @@
         confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
     }
 
-    // Seviye göstergelerini çiz
+    // Seviye göstergelerini çiz (sadece maxUnlockedLevel + 2 kadar)
     function renderLevelIndicators() {
         const maxLevel = gameState.maxUnlockedLevel;
         let html = '';
-        for (let i = 1; i <= maxLevel + 2; i++) { // +2 gösterim için
+        for (let i = 1; i <= maxLevel + 2; i++) {
             if (i <= maxLevel) {
                 html += `<div class="level-badge active" data-level="${i}">${i}</div>`;
             } else if (i === maxLevel + 1) {
@@ -533,7 +572,7 @@
         }
         levelIndicators.innerHTML = html;
 
-        // Tıklanabilir: sadece aktif seviyeler
+        // Aktif seviyelere tıklanabilir özellik ekle
         document.querySelectorAll('.level-badge.active').forEach(badge => {
             badge.addEventListener('click', () => {
                 const lvl = parseInt(badge.dataset.level);
@@ -543,6 +582,7 @@
                     gameState.currentQuestionIndexInLevel = 0;
                     saveGameState();
                     loadLevelQuestions(lvl);
+                    currentLevelDisplay.innerText = lvl;
                 }
             });
         });
@@ -553,7 +593,7 @@
         return level * 2;
     }
 
-    // Firestore'dan soruları çek ve seviyeye uygun olanları filtrele
+    // Firestore'dan tüm soruları çek
     async function loadAllQuestions() {
         try {
             const q = query(collection(db, QUESTIONS_COLLECTION));
@@ -562,19 +602,15 @@
             snapshot.forEach(doc => {
                 allQuestions.push({ id: doc.id, ...doc.data() });
             });
-            // Zorluk eklenmemişse rastgele dağıt, yoksa zorluk seviyesine göre
-            // Basit: tüm soruları kullan, seviye için karıştır
         } catch (e) {
             console.error('Soru yüklenemedi:', e);
             allQuestions = SAMPLE_QUESTIONS.map((q, idx) => ({ id: `sample-${idx}`, ...q }));
         }
     }
 
-    // Belirli seviye için soruları hazırla
+    // Belirli seviye için soruları rastgele seç
     function loadLevelQuestions(level) {
         const countNeeded = getQuestionCountForLevel(level);
-        // Rastgele seç (veya düz mantıkla mevcut sorulardan seç)
-        // Daha iyisi: her seviye için zorluk eklenebilir, şimdilik rastgele
         const shuffled = [...allQuestions].sort(() => Math.random() - 0.5);
         currentLevelQuestions = shuffled.slice(0, countNeeded);
         gameState.currentQuestionIndexInLevel = Math.min(gameState.currentQuestionIndexInLevel, currentLevelQuestions.length - 1);
@@ -587,7 +623,6 @@
         if (!currentLevelQuestions.length) return;
         currentQuestion = currentLevelQuestions[index];
         questionEl.innerText = currentQuestion.soru;
-        // Şıkları oluştur
         optionsEl.innerHTML = '';
         currentQuestion.secenekler.forEach((sec, idx) => {
             const btn = document.createElement('button');
@@ -602,7 +637,7 @@
         firstAttempt = true;
         selectedOptionIndex = null;
         nextBtn.classList.add('disabled');
-        // Tüm şıkların disabled sınıfını kaldır, varsa correct/wrong sıfırla
+        nextBtn.classList.remove('active');
         document.querySelectorAll('.option-btn').forEach(b => {
             b.classList.remove('correct', 'wrong', 'disabled');
             b.disabled = false;
@@ -612,20 +647,17 @@
     // Şık tıklama
     async function handleOptionClick(selectedIdx, btnElement) {
         if (!gameActive) return;
-        if (answered) return; // cevap verildiyse tekrar tıklanmasın
+        if (answered) return;
 
         const isCorrect = (selectedIdx === currentQuestion.dogru);
         const questionId = `${gameState.currentLevel}_${currentQuestion.id || currentQuestion.soru}`;
 
         if (isCorrect) {
-            // DOĞRU CEVAP
             answered = true;
-            // Şıkkı yeşil yap
             btnElement.classList.add('correct');
-            // Diğer şıkları devre dışı bırak
             document.querySelectorAll('.option-btn').forEach(b => b.classList.add('disabled'));
 
-            // PUAN: sadece ilk denemede ve daha önce bu sorudan puan alınmamışsa
+            // PUAN: sadece ilk denemede ve daha önce puan alınmamışsa
             if (firstAttempt && !gameState.earnedPointsForQuestion[questionId]) {
                 gameState.score += 1;
                 gameState.earnedPointsForQuestion[questionId] = true;
@@ -633,61 +665,52 @@
                 showToast('🎉 Harika! Doğru cevap! +1 Puan', 'success');
                 triggerConfetti();
             } else if (!firstAttempt) {
-                // ikinci denemede doğru: sadece tebrik
                 showToast('✅ Doğru! (İkinci denemede)', 'info');
             } else {
                 showToast('✅ Doğru!', 'success');
             }
 
-            // İleri butonunu aktif et
             nextBtn.classList.remove('disabled');
             nextBtn.classList.add('active');
         } else {
-            // YANLIŞ CEVAP
+            // YANLIŞ
             btnElement.classList.add('wrong');
-            // Diğer şıkları disabled yapma, hata verdikten sonra ikinci şans için tıklanabilir kalmalı ama aynı şıkkı tekrar seçmesin
             btnElement.classList.add('disabled');
             btnElement.disabled = true;
 
             if (firstAttempt) {
-                // İlk yanlış: ikinci şans
                 firstAttempt = false;
                 showToast('❌ Yanlış! Bir hakkın daha var.', 'info');
             } else {
-                // İkinci yanlış: OYUN BİTTİ
+                // İkinci yanlış: OYUN BİTTİ - ama puan ve max seviye KORUNSUN
                 gameActive = false;
-                gameOverMessage.innerText = 'İkinci hakkında da yanlış cevap verdin. Tekrar dene!';
+                gameOverMessage.innerText = `İkinci hakkında da yanlış cevap verdin.\nSeviye ${gameState.currentLevel}'e geri dönüyorsun.`;
                 gameOverModal.classList.add('active');
-                // cevap hakkı bitti, tüm şıklar pasif
                 document.querySelectorAll('.option-btn').forEach(b => b.classList.add('disabled'));
             }
         }
-        // Puan göstergesini güncelle
         scoreDisplay.innerText = gameState.score;
     }
 
     // İleri butonuna tıkla
     function onNext() {
         if (!nextBtn.classList.contains('active')) return;
-        // Bir sonraki soruya geç
+
         gameState.currentQuestionIndexInLevel++;
         if (gameState.currentQuestionIndexInLevel >= currentLevelQuestions.length) {
             // SEVİYE TAMAMLANDI!
             const completedLevel = gameState.currentLevel;
-            // Yeni seviyeyi aktif et (eğer en yüksek seviye ise)
             if (completedLevel === gameState.maxUnlockedLevel) {
                 gameState.maxUnlockedLevel++;
             }
             gameState.currentLevel = completedLevel + 1;
             gameState.currentQuestionIndexInLevel = 0;
             saveGameState();
-            // Yeni seviyeyi yükle
             loadLevelQuestions(gameState.currentLevel);
             currentLevelDisplay.innerText = gameState.currentLevel;
             renderLevelIndicators();
             showToast(`🎯 Seviye ${completedLevel} tamamlandı! Seviye ${gameState.currentLevel} başladı.`, 'success');
         } else {
-            // Aynı seviyede sonraki soru
             loadQuestionAtIndex(gameState.currentQuestionIndexInLevel);
             saveGameState();
         }
@@ -695,20 +718,16 @@
         nextBtn.classList.add('disabled');
     }
 
-    // Oyunu yeniden başlat (sıfırla)
-    function restartGame() {
-        gameState.maxUnlockedLevel = 1;
-        gameState.currentLevel = 1;
+    // Oyun bittiğinde "Seviyeyi Tekrarla" butonu:
+    // Puan ve maxUnlockedLevel sıfırlanmaz, sadece currentLevel'ı aynı seviyede başa alır.
+    function restartLevelAfterGameOver() {
+        // Oyunun bittiği seviyeyi tekrar dene, soru indeksi 0 olsun.
         gameState.currentQuestionIndexInLevel = 0;
-        gameState.score = 0;
-        gameState.earnedPointsForQuestion = {};
-        saveGameState();
         gameActive = true;
         gameOverModal.classList.remove('active');
-        scoreDisplay.innerText = '0';
-        currentLevelDisplay.innerText = '1';
-        renderLevelIndicators();
-        loadLevelQuestions(1);
+        loadLevelQuestions(gameState.currentLevel);
+        currentLevelDisplay.innerText = gameState.currentLevel;
+        // Puan ve maxUnlockedLevel aynen korunuyor, save'e gerek yok.
     }
 
     // ----------------------------------------------------
@@ -723,10 +742,9 @@
         currentLevelDisplay.innerText = gameState.currentLevel;
         loadLevelQuestions(gameState.currentLevel);
 
-        // Olay dinleyiciler
         nextBtn.addEventListener('click', onNext);
         restartBtn.addEventListener('click', () => {
-            restartGame();
+            restartLevelAfterGameOver();
         });
     });
 
