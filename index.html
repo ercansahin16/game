@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+    <title>Manevi Bilgi Oyunu 🌙</title>
+    <!-- Font Awesome 6 (ikonlar) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Font: Poppins (eğlenceli ama okunabilir) -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- confetti kütüphanesi (hafif) -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
+    
+    <style>
+        /* --------------------------------------------
+           PASTEL, AÇIK, GÖZÜ YORMAYAN RENK PALETİ 
+           -------------------------------------------- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #fbe9f0 0%, #e0f2e6 100%);
+            /* açık pembe - nane yeşili geçiş */
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            max-width: 900px;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 48px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05), 0 5px 15px rgba(0,0,0,0.03);
+            padding: 30px;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        /* ÜST BİLGİ PANELİ */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .score-box, .level-box {
+            background: white;
+            padding: 12px 25px;
+            border-radius: 40px;
+            box-shadow: 0 6px 0 #cbd5e0;
+            border: 1px solid #cbd5e0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #2d3e50;
+            font-size: 1.2rem;
+        }
+
+        .score-box i, .level-box i {
+            color: #ff9f1c;
+            font-size: 1.4rem;
+        }
+
+        /* SEVİYE KUTULARI (KİLİTLİ/AKTİF) */
+        .levels-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            background: rgba(255,255,255,0.4);
+            padding: 20px;
+            border-radius: 60px;
+        }
+
+        .level-badge {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: #2d3e50;
+            box-shadow: 0 6px 0 #b0c4ce;
+            border: 2px solid #ffe9e9;
+            transition: all 0.1s ease;
+            position: relative;
+        }
+
+        .level-badge.active {
+            background: #b5e6c3;
+            box-shadow: 0 6px 0 #6b9e7a;
+            color: #1e3a2f;
+            border-color: #a5d6b7;
+        }
+
+        .level-badge.locked {
+            background: #e0e0e0;
+            box-shadow: 0 6px 0 #adadad;
+            color: #7e7e7e;
+            border-color: #ccc;
+            opacity: 0.8;
+        }
+
+        .level-badge.locked i {
+            font-size: 1.6rem;
+            color: #8b8b8b;
+        }
+
+        .level-badge:not(.locked):hover {
+            transform: scale(1.05);
+            cursor: pointer;
+            background: #ffe5a3;
+        }
+
+        /* SORU KARTI */
+        .question-card {
+            background: white;
+            border-radius: 32px;
+            padding: 35px 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 0 #e2e8f0;
+            border: 2px solid #edf2f7;
+        }
+
+        .question-text {
+            font-size: 1.7rem;
+            font-weight: 600;
+            color: #2d3e50;
+            line-height: 1.4;
+            margin-bottom: 30px;
+            word-break: break-word;
+        }
+
+        /* ŞIKLAR */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .option-btn {
+            background: #fff6e6;
+            border: 3px solid #ffdab9;
+            border-radius: 100px;
+            padding: 18px 12px;
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #3a4e5e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.15s;
+            box-shadow: 0 7px 0 #e6c4a8;
+            cursor: pointer;
+            text-align: left;
+            word-break: break-word;
+        }
+
+        .option-btn:hover {
+            background: #ffe8d6;
+            transform: translateY(-2px);
+            box-shadow: 0 9px 0 #e6c4a8;
+        }
+
+        .option-btn.disabled {
+            pointer-events: none;
+            opacity: 0.7;
+            filter: grayscale(0.3);
+        }
+
+        .option-btn.correct {
+            background: #c8e6c9;
+            border-color: #81c784;
+            box-shadow: 0 7px 0 #519657;
+            color: #1e3a2f;
+        }
+
+        .option-btn.wrong {
+            background: #ffcdd2;
+            border-color: #e57373;
+            box-shadow: 0 7px 0 #b71c1c;
+            color: #711515;
+        }
+
+        /* İLERİ BUTONU */
+        .next-btn {
+            background: #b2d8d8;
+            border: none;
+            border-radius: 60px;
+            padding: 18px 40px;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #1e4a4a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 15px auto 5px;
+            width: fit-content;
+            box-shadow: 0 10px 0 #6b9e9e;
+            transition: all 0.1s;
+            cursor: pointer;
+            border: 2px solid #c0e0e0;
+        }
+
+        .next-btn.active {
+            background: #ffe69b;
+            box-shadow: 0 10px 0 #d4a373;
+            color: #5e4b3c;
+        }
+
+        .next-btn.active:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 13px 0 #d4a373;
+        }
+
+        .next-btn.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        /* BİLDİRİM (toast) */
+        .toast-message {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            color: #2d3e50;
+            padding: 14px 30px;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 9999;
+            border: 2px solid #ffe0b0;
+            backdrop-filter: blur(4px);
+            animation: slideDown 0.3s;
+        }
+
+        .toast-success {
+            background: #d4edda;
+            border-color: #a3d0b1;
+            color: #0b5e42;
+        }
+
+        .toast-info {
+            background: #fff3cd;
+            border-color: #ffe69b;
+            color: #856404;
+        }
+
+        @keyframes slideDown {
+            from { top: -50px; opacity: 0; }
+            to { top: 30px; opacity: 1; }
+        }
+
+        /* OYUN BİTTİ MODAL */
+        .game-over-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+
+        .game-over-modal.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .game-over-card {
+            background: white;
+            border-radius: 48px;
+            padding: 40px;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 25px 0 #ffe0b5;
+            border: 3px solid #ffe8d9;
+        }
+
+        .game-over-card h2 {
+            font-size: 2.2rem;
+            color: #b34180;
+            margin-bottom: 15px;
+        }
+
+        .game-over-card p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            color: #4a4e6b;
+        }
+
+        .restart-btn {
+            background: #ffb7b7;
+            border: none;
+            border-radius: 50px;
+            padding: 16px 35px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #631e1e;
+            box-shadow: 0 9px 0 #b47272;
+            cursor: pointer;
+            transition: 0.1s;
+            display: inline-flex;
+            gap: 10px;
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 0 #b47272;
+        }
+
+        /* mobil uyum */
+        @media (max-width: 650px) {
+            .game-container { padding: 20px; }
+            .options-grid { grid-template-columns: 1fr; }
+            .question-text { font-size: 1.4rem; }
+            .level-badge { width: 50px; height: 50px; font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <!-- ÜST PANEL: Puan ve Seviye -->
+    <div class="header">
+        <div class="score-box">
+            <i class="fas fa-star"></i>
+            <span id="scoreDisplay">0</span> Puan
+        </div>
+        <div class="level-box">
+            <i class="fas fa-crown"></i>
+            Seviye <span id="currentLevelDisplay">1</span>
+        </div>
+    </div>
+
+    <!-- SEVİYE GÖSTERGE (KİLİTLER) -->
+    <div id="levelIndicators" class="levels-container">
+        <!-- javascript ile doldurulacak -->
+    </div>
+
+    <!-- SORU ALANI -->
+    <div id="questionCard" class="question-card">
+        <div id="questionText" class="question-text">
+            Soru yükleniyor...
+        </div>
+        <div id="optionsContainer" class="options-grid">
+            <!-- şıklar buraya -->
+        </div>
+
+        <!-- İLERİ BUTONU (başlangıçta pasif) -->
+        <button id="nextButton" class="next-btn disabled">
+            <i class="fas fa-arrow-right"></i> İleri
+        </button>
+    </div>
+</div>
+
+<!-- OYUN BİTTİ MODAL -->
+<div id="gameOverModal" class="game-over-modal">
+    <div class="game-over-card">
+        <h2><i class="fas fa-heart-crack"></i> Oyun Bitti</h2>
+        <p id="gameOverMessage">Bir daha denemek ister misin?</p>
+        <button id="restartGameBtn" class="restart-btn">
+            <i class="fas fa-rotate-left"></i> Tekrar Başla
+        </button>
+    </div>
+</div>
+
+<!-- TOAST mesajları için container -->
+<div id="toastContainer" style="position: fixed; top: 20px; left: 0; right: 0; pointer-events: none; z-index: 9999;"></div>
+
+<script type="module">
+    // ----------------------------------------------------
+    // FIREBASE IMPORTLAR
+    // ----------------------------------------------------
+    import { db } from './firebase-core.js';
+    import { 
+        collection, getDocs, addDoc, query, orderBy, limit, doc, setDoc, getDoc 
+    } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+
+    // ----------------------------------------------------
+    // 1) FIRESTORE'DA SORULAR YOKSA ÖRNEK SORULARI YÜKLE
+    // ----------------------------------------------------
+    const QUESTIONS_COLLECTION = 'manevi_sorular';
+    const SAMPLE_QUESTIONS = [
+        // KUR'AN
+        { bolum: 'Kur\'an', soru: 'Kur\'an-ı Kerim kaç cüzden oluşur?', secenekler: ['28', '29', '30', '31'], dogru: 2, zorluk: 1 },
+        { bolum: 'Kur\'an', soru: 'Hangi sure Kur\'an\'ın kalbi olarak bilinir?', secenekler: ['Fatiha', 'Yasin', 'Rahman', 'Mülk'], dogru: 1, zorluk: 2 },
+        { bolum: 'Kur\'an', soru: 'Kur\'an\'da adı geçen tek sahabe kimdir?', secenekler: ['Ebu Bekir', 'Ömer', 'Zeyd', 'Üsame'], dogru: 2, zorluk: 2 },
+        { bolum: 'Kur\'an', soru: 'Kur\'an\'da en uzun sure hangisidir?', secenekler: ['Bakara', 'Ali İmran', 'Nisa', 'Araf'], dogru: 0, zorluk: 1 },
+        { bolum: 'Kur\'an', soru: 'Kur\'an-ı Kerim kaç yılda indirilmiştir?', secenekler: ['20 yıl', '23 yıl', '25 yıl', '22 yıl'], dogru: 1, zorluk: 2 },
+        // NAMAZ
+        { bolum: 'Namaz', soru: 'Sabah namazının farzı kaç rekattır?', secenekler: ['2', '3', '4', '1'], dogru: 0, zorluk: 1 },
+        { bolum: 'Namaz', soru: 'Öğle namazının sünnetleri toplam kaç rekattır?', secenekler: ['6', '8', '10', '4'], dogru: 0, zorluk: 2 },
+        { bolum: 'Namaz', soru: 'Cuma namazının farzı kaç rekattır?', secenekler: ['2', '4', '3', '1'], dogru: 0, zorluk: 2 },
+        { bolum: 'Namaz', soru: 'Akşam namazının ilk sünneti kaç rekattır?', secenekler: ['2', '3', '4', '1'], dogru: 0, zorluk: 2 },
+        { bolum: 'Namaz', soru: 'Teravih namazı hangi vaktin sünnetidir?', secenekler: ['Ramazan', 'Bayram', 'Cuma', 'Kandil'], dogru: 0, zorluk: 1 },
+        // PEYGAMBERLER
+        { bolum: 'Peygamberler', soru: 'Hangi peygamber balık tarafından yutulmuştur?', secenekler: ['Musa', 'Yunus', 'İsa', 'Yusuf'], dogru: 1, zorluk: 1 },
+        { bolum: 'Peygamberler', soru: 'İlk peygamber kimdir?', secenekler: ['Adem', 'Nuh', 'İdris', 'Şit'], dogru: 0, zorluk: 1 },
+        { bolum: 'Peygamberler', soru: 'Kur\'an\'da en çok adı geçen peygamber kimdir?', secenekler: ['Musa', 'İbrahim', 'Nuh', 'Yusuf'], dogru: 0, zorluk: 2 },
+        { bolum: 'Peygamberler', soru: 'Hangi peygamber ateşe atılmıştır?', secenekler: ['İsmail', 'İbrahim', 'Musa', 'Yahya'], dogru: 1, zorluk: 1 },
+        { bolum: 'Peygamberler', soru: 'Hangi peygamberin mucizesi ölüyü diriltmektir?', secenekler: ['İsa', 'Musa', 'Davud', 'Süleyman'], dogru: 0, zorluk: 2 },
+        // daha fazla soru eklenebilir...
+    ];
+
+    async function seedQuestionsIfNeeded() {
+        try {
+            const q = query(collection(db, QUESTIONS_COLLECTION), limit(1));
+            const snapshot = await getDocs(q);
+            if (snapshot.empty) {
+                console.log('Örnek sorular yükleniyor...');
+                for (const q of SAMPLE_QUESTIONS) {
+                    await addDoc(collection(db, QUESTIONS_COLLECTION), q);
+                }
+                console.log('Örnek sorular eklendi.');
+            }
+        } catch (e) {
+            console.error('Soru yükleme hatası:', e);
+        }
+    }
+
+    // ----------------------------------------------------
+    // 2) OYUN DURUMU (LOCALSTORAGE)
+    // ----------------------------------------------------
+    let gameState = {
+        maxUnlockedLevel: 1,       // En fazla ulaşılmış seviye
+        currentLevel: 1,
+        currentQuestionIndexInLevel: 0, // 0'dan başlar
+        score: 0,
+        // Bu seviyede hangi soruların ilk denemede doğru yapıldığını tut (puan alındı)
+        earnedPointsForQuestion: {} // örnek: { "seviye1_soruID": true }
+    };
+
+    const STORAGE_KEY = 'maneviOyunSave';
+
+    function loadGameState() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                gameState = { ...gameState, ...parsed };
+                // Eski formattan dönüşüm
+                if (!gameState.earnedPointsForQuestion) gameState.earnedPointsForQuestion = {};
+            } catch (e) {}
+        }
+    }
+
+    function saveGameState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
+    }
+
+    // ----------------------------------------------------
+    // 3) DEĞİŞKENLER
+    // ----------------------------------------------------
+    let allQuestions = [];          // Tüm sorular Firestore'dan çekilecek
+    let currentLevelQuestions = []; // Şu anki seviyeye ait sorular
+    let currentQuestion = null;
+    let answered = false;          // Soru cevaplandı mı?
+    let firstAttempt = true;       // Bu soruda ilk deneme mi?
+    let gameActive = true;        // Oyun devam ediyor mu?
+    let selectedOptionIndex = null;
+
+    // ----------------------------------------------------
+    // 4) DOM ELEMENTLERİ
+    // ----------------------------------------------------
+    const questionEl = document.getElementById('questionText');
+    const optionsEl = document.getElementById('optionsContainer');
+    const nextBtn = document.getElementById('nextButton');
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const currentLevelDisplay = document.getElementById('currentLevelDisplay');
+    const levelIndicators = document.getElementById('levelIndicators');
+    const gameOverModal = document.getElementById('gameOverModal');
+    const gameOverMessage = document.getElementById('gameOverMessage');
+    const restartBtn = document.getElementById('restartGameBtn');
+
+    // ----------------------------------------------------
+    // 5) YARDIMCI FONKSİYONLAR
+    // ----------------------------------------------------
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast-message ${type === 'success' ? 'toast-success' : 'toast-info'}`;
+        toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-circle-check' : 'fa-circle-info'}"></i> ${message}`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 2500);
+    }
+
+    function triggerConfetti() {
+        confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+    }
+
+    // Seviye göstergelerini çiz
+    function renderLevelIndicators() {
+        const maxLevel = gameState.maxUnlockedLevel;
+        let html = '';
+        for (let i = 1; i <= maxLevel + 2; i++) { // +2 gösterim için
+            if (i <= maxLevel) {
+                html += `<div class="level-badge active" data-level="${i}">${i}</div>`;
+            } else if (i === maxLevel + 1) {
+                html += `<div class="level-badge locked" data-level="${i}"><i class="fas fa-lock"></i></div>`;
+            } else {
+                html += `<div class="level-badge locked" style="opacity:0.4;"><i class="fas fa-lock"></i></div>`;
+            }
+        }
+        levelIndicators.innerHTML = html;
+
+        // Tıklanabilir: sadece aktif seviyeler
+        document.querySelectorAll('.level-badge.active').forEach(badge => {
+            badge.addEventListener('click', () => {
+                const lvl = parseInt(badge.dataset.level);
+                if (lvl <= gameState.maxUnlockedLevel && lvl !== gameState.currentLevel) {
+                    // seviye değiştir, soruları yükle
+                    gameState.currentLevel = lvl;
+                    gameState.currentQuestionIndexInLevel = 0;
+                    saveGameState();
+                    loadLevelQuestions(lvl);
+                }
+            });
+        });
+    }
+
+    // Seviyeye göre soru sayısı (2,4,6,8...)
+    function getQuestionCountForLevel(level) {
+        return level * 2;
+    }
+
+    // Firestore'dan soruları çek ve seviyeye uygun olanları filtrele
+    async function loadAllQuestions() {
+        try {
+            const q = query(collection(db, QUESTIONS_COLLECTION));
+            const snapshot = await getDocs(q);
+            allQuestions = [];
+            snapshot.forEach(doc => {
+                allQuestions.push({ id: doc.id, ...doc.data() });
+            });
+            // Zorluk eklenmemişse rastgele dağıt, yoksa zorluk seviyesine göre
+            // Basit: tüm soruları kullan, seviye için karıştır
+        } catch (e) {
+            console.error('Soru yüklenemedi:', e);
+            allQuestions = SAMPLE_QUESTIONS.map((q, idx) => ({ id: `sample-${idx}`, ...q }));
+        }
+    }
+
+    // Belirli seviye için soruları hazırla
+    function loadLevelQuestions(level) {
+        const countNeeded = getQuestionCountForLevel(level);
+        // Rastgele seç (veya düz mantıkla mevcut sorulardan seç)
+        // Daha iyisi: her seviye için zorluk eklenebilir, şimdilik rastgele
+        const shuffled = [...allQuestions].sort(() => Math.random() - 0.5);
+        currentLevelQuestions = shuffled.slice(0, countNeeded);
+        gameState.currentQuestionIndexInLevel = Math.min(gameState.currentQuestionIndexInLevel, currentLevelQuestions.length - 1);
+        if (gameState.currentQuestionIndexInLevel < 0) gameState.currentQuestionIndexInLevel = 0;
+        loadQuestionAtIndex(gameState.currentQuestionIndexInLevel);
+    }
+
+    // İndexteki soruyu yükle
+    function loadQuestionAtIndex(index) {
+        if (!currentLevelQuestions.length) return;
+        currentQuestion = currentLevelQuestions[index];
+        questionEl.innerText = currentQuestion.soru;
+        // Şıkları oluştur
+        optionsEl.innerHTML = '';
+        currentQuestion.secenekler.forEach((sec, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerHTML = `<span style="font-weight:700; margin-right:8px;">${String.fromCharCode(65 + idx)}</span> ${sec}`;
+            btn.dataset.optionIndex = idx;
+            btn.addEventListener('click', () => handleOptionClick(idx, btn));
+            optionsEl.appendChild(btn);
+        });
+
+        answered = false;
+        firstAttempt = true;
+        selectedOptionIndex = null;
+        nextBtn.classList.add('disabled');
+        // Tüm şıkların disabled sınıfını kaldır, varsa correct/wrong sıfırla
+        document.querySelectorAll('.option-btn').forEach(b => {
+            b.classList.remove('correct', 'wrong', 'disabled');
+            b.disabled = false;
+        });
+    }
+
+    // Şık tıklama
+    async function handleOptionClick(selectedIdx, btnElement) {
+        if (!gameActive) return;
+        if (answered) return; // cevap verildiyse tekrar tıklanmasın
+
+        const isCorrect = (selectedIdx === currentQuestion.dogru);
+        const questionId = `${gameState.currentLevel}_${currentQuestion.id || currentQuestion.soru}`;
+
+        if (isCorrect) {
+            // DOĞRU CEVAP
+            answered = true;
+            // Şıkkı yeşil yap
+            btnElement.classList.add('correct');
+            // Diğer şıkları devre dışı bırak
+            document.querySelectorAll('.option-btn').forEach(b => b.classList.add('disabled'));
+
+            // PUAN: sadece ilk denemede ve daha önce bu sorudan puan alınmamışsa
+            if (firstAttempt && !gameState.earnedPointsForQuestion[questionId]) {
+                gameState.score += 1;
+                gameState.earnedPointsForQuestion[questionId] = true;
+                saveGameState();
+                showToast('🎉 Harika! Doğru cevap! +1 Puan', 'success');
+                triggerConfetti();
+            } else if (!firstAttempt) {
+                // ikinci denemede doğru: sadece tebrik
+                showToast('✅ Doğru! (İkinci denemede)', 'info');
+            } else {
+                showToast('✅ Doğru!', 'success');
+            }
+
+            // İleri butonunu aktif et
+            nextBtn.classList.remove('disabled');
+            nextBtn.classList.add('active');
+        } else {
+            // YANLIŞ CEVAP
+            btnElement.classList.add('wrong');
+            // Diğer şıkları disabled yapma, hata verdikten sonra ikinci şans için tıklanabilir kalmalı ama aynı şıkkı tekrar seçmesin
+            btnElement.classList.add('disabled');
+            btnElement.disabled = true;
+
+            if (firstAttempt) {
+                // İlk yanlış: ikinci şans
+                firstAttempt = false;
+                showToast('❌ Yanlış! Bir hakkın daha var.', 'info');
+            } else {
+                // İkinci yanlış: OYUN BİTTİ
+                gameActive = false;
+                gameOverMessage.innerText = 'İkinci hakkında da yanlış cevap verdin. Tekrar dene!';
+                gameOverModal.classList.add('active');
+                // cevap hakkı bitti, tüm şıklar pasif
+                document.querySelectorAll('.option-btn').forEach(b => b.classList.add('disabled'));
+            }
+        }
+        // Puan göstergesini güncelle
+        scoreDisplay.innerText = gameState.score;
+    }
+
+    // İleri butonuna tıkla
+    function onNext() {
+        if (!nextBtn.classList.contains('active')) return;
+        // Bir sonraki soruya geç
+        gameState.currentQuestionIndexInLevel++;
+        if (gameState.currentQuestionIndexInLevel >= currentLevelQuestions.length) {
+            // SEVİYE TAMAMLANDI!
+            const completedLevel = gameState.currentLevel;
+            // Yeni seviyeyi aktif et (eğer en yüksek seviye ise)
+            if (completedLevel === gameState.maxUnlockedLevel) {
+                gameState.maxUnlockedLevel++;
+            }
+            gameState.currentLevel = completedLevel + 1;
+            gameState.currentQuestionIndexInLevel = 0;
+            saveGameState();
+            // Yeni seviyeyi yükle
+            loadLevelQuestions(gameState.currentLevel);
+            currentLevelDisplay.innerText = gameState.currentLevel;
+            renderLevelIndicators();
+            showToast(`🎯 Seviye ${completedLevel} tamamlandı! Seviye ${gameState.currentLevel} başladı.`, 'success');
+        } else {
+            // Aynı seviyede sonraki soru
+            loadQuestionAtIndex(gameState.currentQuestionIndexInLevel);
+            saveGameState();
+        }
+        nextBtn.classList.remove('active');
+        nextBtn.classList.add('disabled');
+    }
+
+    // Oyunu yeniden başlat (sıfırla)
+    function restartGame() {
+        gameState.maxUnlockedLevel = 1;
+        gameState.currentLevel = 1;
+        gameState.currentQuestionIndexInLevel = 0;
+        gameState.score = 0;
+        gameState.earnedPointsForQuestion = {};
+        saveGameState();
+        gameActive = true;
+        gameOverModal.classList.remove('active');
+        scoreDisplay.innerText = '0';
+        currentLevelDisplay.innerText = '1';
+        renderLevelIndicators();
+        loadLevelQuestions(1);
+    }
+
+    // ----------------------------------------------------
+    // 6) INIT
+    // ----------------------------------------------------
+    window.addEventListener('DOMContentLoaded', async () => {
+        loadGameState();
+        await seedQuestionsIfNeeded();
+        await loadAllQuestions();
+        renderLevelIndicators();
+        scoreDisplay.innerText = gameState.score;
+        currentLevelDisplay.innerText = gameState.currentLevel;
+        loadLevelQuestions(gameState.currentLevel);
+
+        // Olay dinleyiciler
+        nextBtn.addEventListener('click', onNext);
+        restartBtn.addEventListener('click', () => {
+            restartGame();
+        });
+    });
+
+</script>
+</body>
+</html>
